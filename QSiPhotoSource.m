@@ -1,25 +1,26 @@
 
 
 #import "QSiPhotoSource.h"
-#import <QSCore/QSCore.h>
 
-#import <QSCore/QSMacros.h>
+static iPhotoApplication *iPhoto;
+
+iPhotoApplication *QSiPhoto()
+{
+	if (!iPhoto) {
+		iPhoto = [SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"];
+	}
+	return iPhoto;
+}
 
 #pragma mark Object Source
 @implementation QSiPhotoObjectSource
-
-+ (void)registerInstance{
-    QSiPhotoObjectSource *source=[[[QSiPhotoObjectSource alloc]init]autorelease];
-    [QSReg registerSource:source];
-    [QSReg registerHandler:source forType:QSiPhotoAlbumPboardType];
-}
 
 - (BOOL)indexIsValidFromDate:(NSDate *)indexDate forEntry:(NSDictionary *)theEntry{
     NSString *libraryPath=[(NSString *)CFPreferencesCopyValue((CFStringRef) @"RootDirectory", (CFStringRef) @"com.apple.iPhoto", kCFPreferencesCurrentUser, kCFPreferencesAnyHost) autorelease];
 	libraryPath=[libraryPath stringByAppendingPathComponent:@"AlbumData.xml"];
 	
 	if (![[NSFileManager defaultManager]fileExistsAtPath:libraryPath]) return YES;
-    NSDate *modDate=[[[NSFileManager defaultManager] fileAttributesAtPath:libraryPath traverseLink:YES]fileModificationDate];
+    NSDate *modDate=[[[NSFileManager defaultManager] attributesOfItemAtPath:libraryPath error:nil]fileModificationDate];
 	
 	return [modDate compare:indexDate]==NSOrderedAscending;
 }
@@ -29,41 +30,71 @@
 }
 
 - (NSArray *) objectsForEntry:(NSDictionary *)theEntry{
-    NSMutableArray *objects=[NSMutableArray arrayWithCapacity:1];
+    NSMutableArray *objects=[[NSMutableArray alloc] init];
 	
+    NSMutableArray *eventsObjects =[ [NSMutableArray alloc] init];
     QSObject *newObject;
+    // Events are called 'Rolls'. Throughout the plugin we must check for both when looking at an applescript album
+    NSArray *events = [[self iPhotoLibrary] objectForKey:@"List of Rolls"];
+    for (NSDictionary *thisEvent in events) {
+        newObject=[QSObject objectWithName:[thisEvent objectForKey:@"RollName"]];
+        [newObject setObject:thisEvent forType:QSiPhotoEventPboardType];
+        [newObject setPrimaryType:QSiPhotoEventPboardType];
+        // Avoids duplicates (for example, the most recent album and the actual album)
+        if (![eventsObjects containsObject:newObject]) {
+            [eventsObjects addObject:newObject];
+        }
+    }
     
-    //Albums
+    //Albums - these include recently added albums/events, published albums etc.
     NSArray *albums=[[self iPhotoLibrary] objectForKey:@"List of Albums"];
     for (NSDictionary *thisAlbum in albums){
         newObject=[QSObject objectWithName:[thisAlbum objectForKey:@"AlbumName"]];
         [newObject setObject:thisAlbum forType:QSiPhotoAlbumPboardType];
         [newObject setPrimaryType:QSiPhotoAlbumPboardType];
-        [objects addObject:newObject];
+        if (![objects containsObject:newObject]) {
+            [objects addObject:newObject];
+        }
     }
-    return objects;
+    
+    // Do this so we get a nice order in the results: photos, last album, last 12 months, flagged, events then albums
+    if ([eventsObjects count]) {
+        NSIndexSet *indexes = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(5,[eventsObjects count])];
+        [objects insertObjects:eventsObjects atIndexes:indexes];
+    }
+    [eventsObjects release];
+    
+    return [objects autorelease];
 }
-
 
 
 #pragma mark Object Handler
 
 - (BOOL)loadIconForObject:(QSObject *)object{
-    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType]){
+    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType] || [[object primaryType] isEqualToString:QSiPhotoEventPboardType]){
 		NSString *type=nil;
         NSDictionary *albumDict=[object primaryObject];
         if ([[albumDict objectForKey:@"Master"]boolValue])
             [object setIcon:[QSResourceManager imageNamed:@"iPhotoLibraryIcon"]];
         else if ([(type=[albumDict objectForKey:@"Album Type"])isEqualToString:@"Smart"])
 			[object setIcon:[QSResourceManager imageNamed:@"iPhotoSmartAlbumIcon"]];
+        else if ([type isEqualToString:@"Regular"])
+            [object setIcon:[QSResourceManager imageNamed:@"iPhotoAlbumIcon"]];
 		else if ([type isEqualToString:@"Special Month"])
 			[object setIcon:[QSResourceManager imageNamed:@"iPhotoSpecialMonthIcon"]];
 		else if ([type isEqualToString:@"Special Roll"])
 			[object setIcon:[QSResourceManager imageNamed:@"iPhotoSpecialRollIcon"]];
 		else if ([type isEqualToString:@"Folder"])
 			[object setIcon:[QSResourceManager imageNamed:@"GenericFolderIcon"]];
+        else if ([type isEqualToString:@"Published"]) {
+            // facebook published album
+            if ([[albumDict objectForKey:@"URL"] containsString:@"facebook.com"]) 
+                [object setIcon:[QSResourceManager imageNamed:@"iPhotoFacebookPublishedAlbumIcon"]];
+            else if ([[albumDict objectForKey:@"URL"] containsString:@"gallery.me.com"])
+                [object setIcon:[QSResourceManager imageNamed:@"iPhotoMobileMePublishedAlbumIcon"]];
+        }
 		else
-			[object setIcon:[QSResourceManager imageNamed:@"iPhotoAlbumIcon"]];
+			[object setIcon:[QSResourceManager imageNamed:@"iPhotoEventIcon"]];
 		return YES;
     }else if ([[object primaryType]isEqualToString:QSiPhotoPhotoType]){
 		NSDictionary *imageDict=[object primaryObject];
@@ -77,23 +108,23 @@
 }
 
 - (NSString *)detailsOfObject:(QSObject *)object{
-	if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType]){
+	if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType] || [[object primaryType] isEqualToString:QSiPhotoEventPboardType]){
         NSDictionary *albumDict=[object primaryObject];
-		int count=[[albumDict objectForKey:@"PhotoCount"]intValue];
+		NSUInteger count=[[albumDict objectForKey:@"PhotoCount"] unsignedIntegerValue];
         return [NSString stringWithFormat:@"%d photo%@",count, ESS(count)];
     }else if ([[object primaryType]isEqualToString:QSiPhotoPhotoType]){
 		NSDictionary *imageDict=[object primaryObject];
-		NSDate *date=[NSCalendarDate dateWithTimeIntervalSinceReferenceDate:[[imageDict objectForKey:@"DateAsTimerInterval"]floatValue]];
+		NSDate *date=[NSCalendarDate dateWithTimeIntervalSinceReferenceDate:[[imageDict objectForKey:@"DateAsTimerInterval"] doubleValue]];
 		return [date description];
 	}
     return NO;
 }
 
 
-- (BOOL)objectHasChildren:(id <QSObject>)object{
-    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType]){
-        NSDictionary *albumDict=[object primaryObject];
-        return [[albumDict objectForKey:@"Album Items"]count];
+- (BOOL)objectHasChildren:(QSObject *)object{
+    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType] || [[object primaryType] isEqualToString:QSiPhotoEventPboardType]){
+        NSDictionary *albumDict= [object primaryObject];
+        return ([(NSArray *)[albumDict objectForKey:@"KeyList"] count] > 0) ? YES : NO;
     }
     return NO;
 }
@@ -102,6 +133,10 @@
 }
 
 - (BOOL)loadChildrenForObject:(QSObject *)object{
+    if ([[object primaryType] isEqualToString:NSFilenamesPboardType]) {
+        [object setChildren:[self objectsForEntry:nil]];
+        return YES;
+    }
     NSArray *children=[self childrenForObject:object];
     
     if (children){
@@ -112,7 +147,7 @@
 }
 
 - (NSArray *)childrenForObject:(QSObject *)object{
-    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType]){
+    if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType] || [[object primaryType] isEqualToString:QSiPhotoEventPboardType]){
         NSDictionary *albumDict=[object primaryObject];
         NSArray *photos=[[[self iPhotoLibrary] objectForKey:@"Master Image List"]objectsForKeys:[albumDict objectForKey:@"KeyList"] notFoundMarker:[NSNull null]];
 		NSMutableArray *objects=[NSMutableArray arrayWithCapacity:[photos count]];
@@ -132,19 +167,13 @@
     return NO;
 }
 
+// Don't store this in memory. In some cases it can be > 11MB, so is a waste if it is only being accessed a few times.
 - (NSDictionary *)iPhotoLibrary { 
-    if (!iPhotoLibrary){
         NSString *libraryPath=[(NSString *)CFPreferencesCopyValue((CFStringRef) @"RootDirectory", (CFStringRef) @"com.apple.iPhoto", kCFPreferencesCurrentUser, kCFPreferencesAnyHost) autorelease];
         libraryPath=[[libraryPath stringByAppendingPathComponent:@"AlbumData.xml"] stringByExpandingTildeInPath];
-        [self setiPhotoLibrary:[NSDictionary dictionaryWithContentsOfFile:libraryPath]]; 
-    }
-    return iPhotoLibrary; 
+    return [NSDictionary dictionaryWithContentsOfFile:libraryPath]; 
 }
 
-- (void)setiPhotoLibrary:(NSDictionary *)newiPhotoLibrary {
-    [iPhotoLibrary release];
-    iPhotoLibrary = [newiPhotoLibrary retain];
-}
 @end
 
 
@@ -157,66 +186,124 @@
 @implementation QSiPhotoActionProvider
 - (id)init{
     if (self=[super init]){
-        iPhotoScript=nil;
+        iPhoto = nil;
     }
     return self;
 }
 
+- (NSDictionary *)iPhotoLibrary { 
+    NSString *libraryPath=[(NSString *)CFPreferencesCopyValue((CFStringRef) @"RootDirectory", (CFStringRef) @"com.apple.iPhoto", kCFPreferencesCurrentUser, kCFPreferencesAnyHost) autorelease];
+    libraryPath=[[libraryPath stringByAppendingPathComponent:@"AlbumData.xml"] stringByExpandingTildeInPath];
+    return [NSDictionary dictionaryWithContentsOfFile:libraryPath]; 
+}
 
-- (QSObject *) slideshow:(QSObject *)dObject{
-    //  NSLog(@"woo");
-    NSString *album=[[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"AlbumName"];
+- (void)emptyTrash {
+    // Launches iPhoto - not the end of the world
+    [QSiPhoto() emptyTrash];
+}
+
+- (QSObject *)slideshow:(QSObject *)dObject{
+    // There are some quirks with starting a slideshow straight away. Instead, it's easier to 'select' (or 'show') the album in iPhoto, then launch a slideshow for the current album (...usingAlbum:nil]; below)
+    [self show:dObject];
     
-    NSDictionary *errorDict=nil;
-    [[self iPhotoScript] executeSubroutine:@"start_slideshow" arguments:album error:&errorDict];
-    if (errorDict) {
-        NSLog(@"Error: %@",errorDict);     
-    }
+    // Doesn't work with events yet
+    [QSiPhoto() startSlideshowAsynchronous:1 displayIndex:0 iChat:0 usingAlbum:nil];
     return nil;
 }
 
 - (QSObject *) show:(QSObject *)dObject{
     NSString *album=[[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"AlbumName"];
-    NSDictionary *errorDict=nil;
-    [[self iPhotoScript] executeSubroutine:@"show_album" arguments:album error:&errorDict];
-    if (errorDict) {
-        NSLog(@"Error: %@",errorDict);     
+    
+    // Won't be used until Events are available for scripting
+    if (!album) {
+        album = [[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"RollName"];
     }
+    if (!album) {
+        NSBeep();
+        NSLog(@"Error getting album name, aborting slideshow");
+        return nil;
+    }
+    SBElementArray *albums = [QSiPhoto() albums];
+    NSUInteger index = [albums indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+        return [[(iPhotoAlbum *)obj name] isEqualToString:album];
+    }];
+    if (index == NSNotFound) {
+        NSLog(@"Error getting album, aborting.");
+        NSBeep();
+        return nil;
+    }
+    [(iPhotoAlbum *)[albums objectAtIndex:index] select];
+    [QSiPhoto() activate];
     return nil;
 }
 
-- (NSAppleScript *)iPhotoScript {
-    if (!iPhotoScript)
-        iPhotoScript=[[NSAppleScript alloc] initWithContentsOfURL:[NSURL fileURLWithPath:[[NSBundle bundleForClass:[self class]]pathForResource:@"iPhoto" ofType:@"scpt"]] error:nil];
-    return iPhotoScript;
+- (iPhotoApplication *)iPhoto {
+    if (!iPhoto) {
+        iPhoto= [[SBApplication applicationWithBundleIdentifier:iPhotoBundleID] retain];
+    }
+    return iPhoto;
 }
 
 -(id)resolveProxyObject:(id)proxy{ 
-	NSLog([proxy identifier]);
 //	NSLog(@"proxyx, %@",proxy);
 	
 	
-	if (!QSAppIsRunning(@"com.apple.iPhoto"))
+	if (![QSiPhoto() isRunning]) {
 		return nil;
-	NSLog([proxy identifier]);
-
-	NSDictionary *errorDict=nil;
+    }
 	
 	if ([[proxy identifier] isEqualToString:@"com.apple.iPhoto"] || !proxy){
-		id result= [[self iPhotoScript] executeSubroutine:@"current_selection" arguments:nil error:&errorDict];
-		if (errorDict) {
-			NSLog(@"Error: %@",errorDict);     
-		}
-//		NSLog(@"result %@",[QSObject fileObjectsWithURLArray:[result objectValue]]);
+        
+        NSArray *selection = [QSiPhoto() selection];
+        
+        if (!selection || ![selection count]) {
+            return nil;
+        }
+        
+        // It's an album that's selected
+        if ([[selection objectAtIndex:0] isKindOfClass:[[iPhoto classForScriptingClass:@"album"] class]]) {
+            NSMutableArray *albumSelection = [[NSMutableArray alloc] initWithCapacity:[selection count]];
+            NSArray *albums = [[self iPhotoLibrary] objectForKey:@"List of Albums"];
+            QSObject *newObject;
+            for (iPhotoAlbum *eachAlbum in selection) {
+                NSUInteger index = [albums indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+                    BOOL passed = [[(NSDictionary *)obj objectForKey:@"AlbumName"] isEqualToString:[eachAlbum name]];
+                    return passed ? YES : [[(NSDictionary *)obj objectForKey:@"AlbumName"] isEqualToString:[eachAlbum name]];
+                }];
+                if (index == NSNotFound) {
+                    continue;
+                }
+                newObject = [QSObject objectWithName:[eachAlbum name]];
+                [newObject setObject:[albums objectAtIndex:index] forType:QSiPhotoAlbumPboardType];
+                [newObject setPrimaryType:QSiPhotoAlbumPboardType];
+                [albumSelection addObject:newObject];
+            }
+            return [QSObject objectByMergingObjects:albumSelection];
+        }
+        
+        NSMutableArray *fileSelection = [[NSMutableArray alloc] initWithCapacity:[selection count]];
+        for (iPhotoPhoto *eachPhoto in  selection) {
+            [fileSelection addObject:[eachPhoto imagePath]];
+        }
+        
+        //		NSLog(@"result %@",[QSObject fileObjectsWithURLArray:[result objectValue]]);
 		
-		return [QSObject fileObjectWithArray:[[result objectValue]valueForKey:@"path"]];
-	}else if ([[proxy identifier] isEqualToString:@"QSiPhotoSelectedAlbumProxy"]){
-		id result= [[self iPhotoScript] executeSubroutine:@"current_album" arguments:nil error:&errorDict];
-		if (errorDict) {
-			NSLog(@"Error: %@",errorDict);     
+		return [QSObject fileObjectWithArray:[fileSelection autorelease]];
+	}else if ([[proxy identifier] isEqualToString:@"QSiPhotoSelectedAlbumProxy"]) {
+        iPhotoAlbum *selectedAlbum = [QSiPhoto() currentAlbum];
+        
+        NSArray *albums = [[self iPhotoLibrary] objectForKey:@"List of Albums"];
+        NSString *name = [selectedAlbum name];
+        NSUInteger index = [albums indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+            BOOL passed = [[(NSDictionary *)obj objectForKey:@"AlbumName"] isEqualToString:name];
+            return passed ? YES : [[(NSDictionary *)obj objectForKey:@"AlbumName"] isEqualToString:name];        }];
+        
+        QSObject *newObject = [QSObject objectWithName:[selectedAlbum name]];
+        [newObject setObject:[albums objectAtIndex:index] forType:QSiPhotoAlbumPboardType];
+        [newObject setPrimaryType:QSiPhotoAlbumPboardType];
+        return newObject;
 		}
 	//	NSLog(@"result %@",[result stringValue]);
-	}
 	return nil;
 }
 
