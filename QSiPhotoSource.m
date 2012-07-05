@@ -175,17 +175,16 @@
 
 @implementation QSiPhotoActionProvider
 
-@synthesize iPhoto;
 
-- (id)init{
-    if (self=[super init]){
-        [self setIPhoto:[SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"]];
+-(iPhotoApplication *)iPhoto {
+    if (!iPhoto) {
+        iPhoto = [[SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"] retain];
     }
-    return self;
+    return iPhoto;
 }
 
 -(void)dealloc {
-    [self setIPhoto:nil];
+    [[self iPhoto] release];
     [super dealloc];
 }
 

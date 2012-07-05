@@ -22,8 +22,6 @@
     iPhotoApplication *iPhoto;
 }
 
-@property (retain) iPhotoApplication *iPhoto;
-
 - (NSDictionary *)iPhotoLibrary;
 
 
