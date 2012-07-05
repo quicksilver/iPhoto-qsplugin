@@ -11,8 +11,6 @@
 #import "iPhoto.h"
 
 
-iPhotoApplication *QSiPhoto();  // returns the iPhoto application
-
 
 @interface QSiPhotoObjectSource : QSObjectSource {
 }
@@ -23,6 +21,8 @@ iPhotoApplication *QSiPhoto();  // returns the iPhoto application
 @interface QSiPhotoActionProvider : QSActionProvider {
     iPhotoApplication *iPhoto;
 }
+
+@property (retain) iPhotoApplication *iPhoto;
 
 - (NSDictionary *)iPhotoLibrary;
 

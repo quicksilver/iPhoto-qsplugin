@@ -2,16 +2,6 @@
 
 #import "QSiPhotoSource.h"
 
-static iPhotoApplication *iPhoto;
-
-iPhotoApplication *QSiPhoto()
-{
-	if (!iPhoto) {
-		iPhoto = [SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"];
-	}
-	return iPhoto;
-}
-
 #pragma mark Object Source
 @implementation QSiPhotoObjectSource
 
@@ -184,11 +174,19 @@ iPhotoApplication *QSiPhoto()
 #define kQSiPhotoAlbumSlideShowAction @"QSiPhotoAlbumSlideShowAction"
 
 @implementation QSiPhotoActionProvider
+
+@synthesize iPhoto;
+
 - (id)init{
     if (self=[super init]){
-        iPhoto = nil;
+        [self setIPhoto:[SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"]];
     }
     return self;
+}
+
+-(void)dealloc {
+    [self setIPhoto:nil];
+    [super dealloc];
 }
 
 - (NSDictionary *)iPhotoLibrary { 
@@ -199,7 +197,7 @@ iPhotoApplication *QSiPhoto()
 
 - (void)emptyTrash {
     // Launches iPhoto - not the end of the world
-    [QSiPhoto() emptyTrash];
+    [[self iPhoto] emptyTrash];
 }
 
 - (QSObject *)slideshow:(QSObject *)dObject{
@@ -207,54 +205,40 @@ iPhotoApplication *QSiPhoto()
     [self show:dObject];
     
     // Doesn't work with events yet
-    [QSiPhoto() startSlideshowAsynchronous:1 displayIndex:0 iChat:0 usingAlbum:nil];
+    [[self iPhoto] startSlideshowAsynchronous:1 displayIndex:0 iChat:0 usingAlbum:nil];
     return nil;
 }
 
 - (QSObject *) show:(QSObject *)dObject{
-    NSString *album=[[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"AlbumName"];
+    NSString *albumName=[[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"AlbumName"];
     
     // Won't be used until Events are available for scripting
-    if (!album) {
-        album = [[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"RollName"];
+    if (!albumName) {
+        albumName = [[dObject objectForType:QSiPhotoAlbumPboardType]objectForKey:@"RollName"];
     }
-    if (!album) {
+    if (!albumName) {
         NSBeep();
         NSLog(@"Error getting album name, aborting slideshow");
         return nil;
     }
-    SBElementArray *albums = [QSiPhoto() albums];
-    NSUInteger index = [albums indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
-        return [[(iPhotoAlbum *)obj name] isEqualToString:album];
-    }];
-    if (index == NSNotFound) {
-        NSLog(@"Error getting album, aborting.");
-        NSBeep();
-        return nil;
-    }
-    [(iPhotoAlbum *)[albums objectAtIndex:index] select];
-    [QSiPhoto() activate];
+    SBElementArray *albums = [[self iPhoto] albums];
+    iPhotoAlbum *theAlbum = [albums objectWithName:albumName];
+    [theAlbum select];
+    [[self iPhoto] activate];
     return nil;
-}
-
-- (iPhotoApplication *)iPhoto {
-    if (!iPhoto) {
-        iPhoto= [[SBApplication applicationWithBundleIdentifier:iPhotoBundleID] retain];
-    }
-    return iPhoto;
 }
 
 -(id)resolveProxyObject:(id)proxy{ 
 //	NSLog(@"proxyx, %@",proxy);
 	
 	
-	if (![QSiPhoto() isRunning]) {
+	if (![[self iPhoto] isRunning]) {
 		return nil;
     }
 	
 	if ([[proxy identifier] isEqualToString:@"com.apple.iPhoto"] || !proxy){
         
-        NSArray *selection = [QSiPhoto() selection];
+        NSArray *selection = [[self iPhoto] selection];
         
         if (!selection || ![selection count]) {
             return nil;
@@ -290,7 +274,7 @@ iPhotoApplication *QSiPhoto()
 		
 		return [QSObject fileObjectWithArray:[fileSelection autorelease]];
 	}else if ([[proxy identifier] isEqualToString:@"QSiPhotoSelectedAlbumProxy"]) {
-        iPhotoAlbum *selectedAlbum = [QSiPhoto() currentAlbum];
+        iPhotoAlbum *selectedAlbum = [[self iPhoto] currentAlbum];
         
         NSArray *albums = [[self iPhotoLibrary] objectForKey:@"List of Albums"];
         NSString *name = [selectedAlbum name];
