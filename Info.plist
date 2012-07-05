@@ -1,45 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
+	<key>CFBundleDisplayName</key>
+	<string>iPhoto Plugin</string>
 	<key>CFBundleExecutable</key>
-	<string>iPhoto Module</string>
+	<string>iPhoto Plugin</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.blacktree.Quicksilver.QSiPhotoPlugIn</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>iPhoto Module</string>
+	<string>iPhoto Plugin</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
-	<key>CFBundleVersion</key>
-	<string>B1</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.5.0</string>
+	<string>2.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>F6</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2004, Blacktree, Inc.</string>
+	<string>Copyright © 2012, QSApp.</string>
 	<key>QSActions</key>
 	<dict>
 		<key>QSiPhotoAlbumShowAction</key>
-		<dict>
-			<key>actionClass</key>
-			<string>QSiPhotoActionProvider</string>
-			<key>actionSelector</key>
-			<string>slideshow:</string>
-			<key>directTypes</key>
-			<array>
-				<string>qs.apple.iPhoto.album</string>
-			</array>
-			<key>icon</key>
-			<string>com.apple.iPhoto</string>
-			<key>name</key>
-			<string>iPhoto Slideshow</string>
-			<key>precedence</key>
-			<integer>3</integer>
-		</dict>
-		<key>QSiPhotoAlbumSlideShowAction</key>
 		<dict>
 			<key>actionClass</key>
 			<string>QSiPhotoActionProvider</string>
@@ -56,11 +41,28 @@
 			<key>precedence</key>
 			<integer>3</integer>
 		</dict>
+		<key>QSiPhotoAlbumSlideShowAction</key>
+		<dict>
+			<key>actionClass</key>
+			<string>QSiPhotoActionProvider</string>
+			<key>actionSelector</key>
+			<string>slideshow:</string>
+			<key>directTypes</key>
+			<array>
+				<string>qs.apple.iPhoto.album</string>
+			</array>
+			<key>icon</key>
+			<string>com.apple.iPhoto</string>
+			<key>name</key>
+			<string>iPhoto Slideshow</string>
+			<key>precedence</key>
+			<integer>3</integer>
+		</dict>
 	</dict>
 	<key>QSPlugIn</key>
 	<dict>
 		<key>author</key>
-		<string>Blacktree, Inc.</string>
+		<string>Patrick Robertson &amp; Blacktree, Inc.</string>
 		<key>categories</key>
 		<array>
 			<string>Applications</string>
@@ -69,13 +71,48 @@
 		<key>description</key>
 		<string>Adds Albums to the catalog</string>
 		<key>extendedDescription</key>
-		<string>Adds Albums to the catalog</string>
+		<string>&lt;h2&gt;iPhoto Plugin&lt;/h2&gt;
+
+&lt;p&gt;The iPhoto plugin for Quicksilver adds iPhoto's albums and events to the Quicksilver catalog. These items are also available by entering into iPhoto.app (using → or /). iPhoto albums and events within Quicksilver contain all the pictures available within iPhoto; useful for copying or moving photos.&lt;br /&gt;
+The plugin also adds several actions for manipulating albums, and proxy objects for dealing with selected items in iPhoto.&lt;/p&gt;
+
+&lt;h2&gt;Catalog&lt;/h2&gt;
+
+&lt;h3&gt;iPhoto Albums&lt;/h3&gt;
+
+&lt;p&gt;Adds your iPhoto albums and events to Quicksilver's catalogs. The same items are available by entering into iPhoto.app (using → or /)&lt;/p&gt;
+
+&lt;h2&gt;Actions&lt;/h2&gt;
+
+&lt;h3&gt;Start Slideshow&lt;/h3&gt;
+
+&lt;p&gt;Available for iPhoto albums only. (&lt;strong&gt;Note: Not available for iPhoto events due to a limitation by Apple&lt;/strong&gt;)&lt;/p&gt;
+
+&lt;p&gt;This action starts a slideshow for the selected album.&lt;/p&gt;
+
+&lt;h3&gt;Show&lt;/h3&gt;
+
+&lt;p&gt;Available for iPhoto albums only. (&lt;strong&gt;Note: Not available for iPhoto events due to a limitation by Apple&lt;/strong&gt;)&lt;/p&gt;
+
+&lt;p&gt;This action shows the selected album in iPhoto, and activates the application.&lt;/p&gt;
+
+&lt;h3&gt;Empty iPhoto Trash&lt;/h3&gt;
+
+&lt;p&gt;This action is available when iPhoto.app is selected in Quicksilver's 1st pane. Executing the action launches iPhoto and empties the iPhoto trash.&lt;/p&gt;
+
+&lt;h2&gt;Proxy Objects&lt;/h2&gt;
+
+&lt;h3&gt;Current iPhoto Selection&lt;/h3&gt;
+
+&lt;p&gt;Returns a list of the currently selected photos in iPhoto. If no photos are selected, then the currently active album is returned.&lt;/p&gt;
+
+&lt;h3&gt;Current iPhoto Album&lt;/h3&gt;
+
+&lt;p&gt;Returns the currently selected iPhoto album. Behaves in the same way as the 'Current iPhoto Selection' proxy object, except the current active album is always return, even when photos are selected.&lt;/p&gt;</string>
 		<key>icon</key>
 		<string>com.apple.iPhoto</string>
 		<key>requiresBundle</key>
 		<string>com.apple.iPhoto</string>
-		<key>requiresFeature</key>
-		<string>0</string>
 	</dict>
 	<key>QSPresetAdditions</key>
 	<array>
@@ -97,9 +134,33 @@
 			<key>QSiPhotoActionProvider</key>
 			<string>QSiPhotoActionProvider</string>
 		</dict>
+		<key>QSApplicationActions</key>
+		<dict>
+			<key>com.apple.iPhoto</key>
+			<dict>
+				<key>QSiPhotoEmptyTrash</key>
+				<dict>
+					<key>actionClass</key>
+					<string>QSiPhotoActionProvider</string>
+					<key>actionSelector</key>
+					<string>emptyTrash</string>
+					<key>icon</key>
+					<string>trashfull.png</string>
+					<key>name</key>
+					<string>Empty iPhoto Trash</string>
+				</dict>
+			</dict>
+		</dict>
+		<key>QSBundleChildHandlers</key>
+		<dict>
+			<key>com.apple.iPhoto</key>
+			<string>QSiPhotoObjectSource</string>
+		</dict>
 		<key>QSObjectHandlers</key>
 		<dict>
 			<key>qs.apple.iPhoto.album</key>
+			<string>QSiPhotoObjectSource</string>
+			<key>qs.apple.iPhoto.event</key>
 			<string>QSiPhotoObjectSource</string>
 			<key>qs.apple.iPhoto.photo</key>
 			<string>QSiPhotoObjectSource</string>
@@ -116,7 +177,7 @@
 				<key>icon</key>
 				<string>com.apple.iPhoto</string>
 				<key>name</key>
-				<string>Selected iPhoto Album</string>
+				<string>Current iPhoto Album</string>
 				<key>providerClass</key>
 				<string>QSiPhotoActionProvider</string>
 				<key>types</key>
@@ -149,6 +210,20 @@
 			<key>resource</key>
 			<string>iPhotoAlbumIcon.png</string>
 		</dict>
+		<key>iPhotoEventIcon</key>
+		<dict>
+			<key>bundle</key>
+			<string>com.apple.iPhoto</string>
+			<key>resource</key>
+			<string>GSEventGraphic.png</string>
+		</dict>
+		<key>iPhotoFacebookPublishedAlbumIcon</key>
+		<dict>
+			<key>bundle</key>
+			<string>com.apple.iPhoto</string>
+			<key>resource</key>
+			<string>po-icon_facebook@2x.png</string>
+		</dict>
 		<key>iPhotoIcon</key>
 		<dict>
 			<key>bundle</key>
@@ -160,6 +235,13 @@
 			<string>com.blacktree.Quicksilver.QSiPhotoPlugIn</string>
 			<key>resource</key>
 			<string>iPhotoLibraryIcon.png</string>
+		</dict>
+		<key>iPhotoMobileMePublishedAlbumIcon</key>
+		<dict>
+			<key>bundle</key>
+			<string>com.apple.iPhoto</string>
+			<key>resource</key>
+			<string>po-icon_mobileMe@2x.png</string>
 		</dict>
 		<key>iPhotoSmartAlbumIcon</key>
 		<dict>

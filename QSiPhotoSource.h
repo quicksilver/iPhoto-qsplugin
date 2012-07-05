@@ -2,21 +2,27 @@
 
 
 #import <Cocoa/Cocoa.h>
-#import <QSCore/QSCore.h>
 
 #define QSiPhotoAlbumPboardType @"qs.apple.iPhoto.album"
+#define QSiPhotoEventPboardType @"qs.apple.iPhoto.event"
 #define QSiPhotoPhotoType @"qs.apple.iPhoto.photo"
+#define iPhotoBundleID @"com.apple.iPhoto"
 
-@interface QSiPhotoObjectSource : QSObjectSource{
-    NSDictionary *iPhotoLibrary;
+#import "iPhoto.h"
+
+
+
+@interface QSiPhotoObjectSource : QSObjectSource {
 }
 
 - (NSDictionary *)iPhotoLibrary;
-- (void)setiPhotoLibrary:(NSDictionary *)newiPhotoLibrary;
 @end
 
-@interface QSiPhotoActionProvider : QSActionProvider{
-    NSAppleScript *iPhotoScript;
+@interface QSiPhotoActionProvider : QSActionProvider {
+    iPhotoApplication *iPhoto;
 }
-- (NSAppleScript *)iPhotoScript;
+
+- (NSDictionary *)iPhotoLibrary;
+
+
 @end
