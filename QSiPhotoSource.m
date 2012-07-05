@@ -78,9 +78,9 @@
 			[object setIcon:[QSResourceManager imageNamed:@"GenericFolderIcon"]];
         else if ([type isEqualToString:@"Published"]) {
             // facebook published album
-            if ([[albumDict objectForKey:@"URL"] containsString:@"facebook.com"]) 
+            if ([[albumDict objectForKey:@"URL"] rangeOfString:@"facebook.com"].length != NSNotFound) 
                 [object setIcon:[QSResourceManager imageNamed:@"iPhotoFacebookPublishedAlbumIcon"]];
-            else if ([[albumDict objectForKey:@"URL"] containsString:@"gallery.me.com"])
+            else if ([[albumDict objectForKey:@"URL"] rangeOfString:@"gallery.me.com"].length != NSNotFound)
                 [object setIcon:[QSResourceManager imageNamed:@"iPhotoMobileMePublishedAlbumIcon"]];
         }
 		else
