@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>2.0.1</string>
 	<key>CFBundleVersion</key>
-	<string>F6</string>
+	<string>FD</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2012, QSApp.</string>
 	<key>QSActions</key>
