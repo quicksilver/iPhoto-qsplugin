@@ -176,15 +176,18 @@
 @implementation QSiPhotoActionProvider
 
 
--(iPhotoApplication *)iPhoto {
-    if (!iPhoto) {
-        iPhoto = [[SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"] retain];
+-(iPhotoApplication *)iPhotoWithLaunch:(BOOL)okToLaunch {
+    
+    if (okToLaunch || QSAppIsRunning(@"com.apple.iPhoto")) {
+        if (!iPhoto) {
+            iPhoto = [[SBApplication applicationWithBundleIdentifier:@"com.apple.iPhoto"] retain];
+        }
     }
     return iPhoto;
 }
 
 -(void)dealloc {
-    [[self iPhoto] release];
+    [[self iPhotoWithLaunch:NO] release];
     [super dealloc];
 }
 
@@ -196,7 +199,7 @@
 
 - (void)emptyTrash {
     // Launches iPhoto - not the end of the world
-    [[self iPhoto] emptyTrash];
+    [[self iPhotoWithLaunch:YES] emptyTrash];
 }
 
 - (QSObject *)slideshow:(QSObject *)dObject{
@@ -204,7 +207,7 @@
     [self show:dObject];
     
     // Doesn't work with events yet
-    [[self iPhoto] startSlideshowAsynchronous:1 displayIndex:0 iChat:0 usingAlbum:nil];
+    [[self iPhotoWithLaunch:YES] startSlideshowAsynchronous:1 displayIndex:0 iChat:0 usingAlbum:nil];
     return nil;
 }
 
@@ -220,10 +223,10 @@
         NSLog(@"Error getting album name, aborting slideshow");
         return nil;
     }
-    SBElementArray *albums = [[self iPhoto] albums];
+    SBElementArray *albums = [[self iPhotoWithLaunch:YES] albums];
     iPhotoAlbum *theAlbum = [albums objectWithName:albumName];
     [theAlbum select];
-    [[self iPhoto] activate];
+    [[self iPhotoWithLaunch:YES] activate];
     return nil;
 }
 
@@ -231,13 +234,13 @@
 //	NSLog(@"proxyx, %@",proxy);
 	
 	
-	if (![[self iPhoto] isRunning]) {
+	if (![[self iPhotoWithLaunch:NO] isRunning]) {
 		return nil;
     }
 	
 	if ([[proxy identifier] isEqualToString:@"com.apple.iPhoto"] || !proxy){
         
-        NSArray *selection = [[self iPhoto] selection];
+        NSArray *selection = [[self iPhotoWithLaunch:NO] selection];
         
         if (!selection || ![selection count]) {
             return nil;
@@ -273,7 +276,7 @@
 		
 		return [QSObject fileObjectWithArray:[fileSelection autorelease]];
 	}else if ([[proxy identifier] isEqualToString:@"QSiPhotoSelectedAlbumProxy"]) {
-        iPhotoAlbum *selectedAlbum = [[self iPhoto] currentAlbum];
+        iPhotoAlbum *selectedAlbum = [[self iPhotoWithLaunch:NO] currentAlbum];
         
         NSArray *albums = [[self iPhotoLibrary] objectForKey:@"List of Albums"];
         NSString *name = [selectedAlbum name];
