@@ -37,8 +37,6 @@
 		14DE8C6110D0B10400851A6F /* Common.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Common.xcconfig; sourceTree = "<group>"; };
 		14DE8C6210D0B10400851A6F /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		14DE8C6310D0B10400851A6F /* Developer.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Developer.xcconfig; sourceTree = "<group>"; };
-		14DE8C6410D0B10400851A6F /* QSPlugIn_Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = QSPlugIn_Debug.xcconfig; sourceTree = "<group>"; };
-		14DE8C6610D0B10400851A6F /* QSPlugIn_Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = QSPlugIn_Release.xcconfig; sourceTree = "<group>"; };
 		14DE8C6710D0B10400851A6F /* QSPlugIn.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = QSPlugIn.xcconfig; sourceTree = "<group>"; };
 		14DE8C6810D0B10400851A6F /* Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		7F35FF3C07F9ACD90056051D /* QSCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = QSCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -102,8 +100,6 @@
 				14DE8C6110D0B10400851A6F /* Common.xcconfig */,
 				14DE8C6210D0B10400851A6F /* Debug.xcconfig */,
 				14DE8C6310D0B10400851A6F /* Developer.xcconfig */,
-				14DE8C6410D0B10400851A6F /* QSPlugIn_Debug.xcconfig */,
-				14DE8C6610D0B10400851A6F /* QSPlugIn_Release.xcconfig */,
 				14DE8C6710D0B10400851A6F /* QSPlugIn.xcconfig */,
 				14DE8C6810D0B10400851A6F /* Release.xcconfig */,
 			);
@@ -146,10 +142,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7F07B03A085E433300E2AFC4 /* Build configuration list for PBXNativeTarget "iPhoto Plugin" */;
 			buildPhases = (
+				E1022B2806B3475D00299BEC /* Update Version and Documentation */,
 				8D1AC96A0486D14A00FE50C9 /* Sources */,
 				8D1AC9660486D14A00FE50C9 /* Resources */,
 				8D1AC96E0486D14A00FE50C9 /* Frameworks */,
-				E1022B2806B3475D00299BEC /* ShellScript */,
 			);
 			buildRules = (
 				CD2E8C79159A17DE00E9A184 /* PBXBuildRule */,
@@ -198,18 +194,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		E1022B2806B3475D00299BEC /* ShellScript */ = {
+		E1022B2806B3475D00299BEC /* Update Version and Documentation */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = "Update Version and Documentation";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/bltrversion $INFOPLIST_FILE";
+			shellScript = "\"$QS_BUILD_ROOT/Tools/bltrversion\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
