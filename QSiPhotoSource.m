@@ -101,7 +101,7 @@
 	if ([[object primaryType]isEqualToString:QSiPhotoAlbumPboardType] || [[object primaryType] isEqualToString:QSiPhotoEventPboardType]){
         NSDictionary *albumDict=[object primaryObject];
 		NSUInteger count=[[albumDict objectForKey:@"PhotoCount"] unsignedIntegerValue];
-        return [NSString stringWithFormat:@"%d photo%@",count, ESS(count)];
+        return [NSString stringWithFormat:@"%lu photo%@",(unsigned long)count, ESS(count)];
     }else if ([[object primaryType]isEqualToString:QSiPhotoPhotoType]){
 		NSDictionary *imageDict=[object primaryObject];
 		NSDate *date=[NSCalendarDate dateWithTimeIntervalSinceReferenceDate:[[imageDict objectForKey:@"DateAsTimerInterval"] doubleValue]];
